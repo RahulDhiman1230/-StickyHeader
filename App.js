@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -8,25 +8,51 @@ import {
   View,
   Image,
   Dimensions,
+  Animated,
 } from 'react-native';
 
-
+const UPPER_VIEW_HEIGHT = 300;
+const HEADER_VIEW_HEIGHT = 50;
+const SCROLL_DISTANCE = UPPER_VIEW_HEIGHT - HEADER_VIEW_HEIGHT;
 const imagePath = require('./src/bgImage.jpeg');
 const App = () => {
+const headerAnimVal = useRef( new Animated.Value(0) ).current;
+const opacityAnimVal = useRef( new Animated.Value(0) ).current;
+const marginTopAnim = useRef( new Animated.Value(0) ).current;
+/**
+ * Interpolate the headerAnimVal
+ */
+const translateY = headerAnimVal?.interpolate({
+  inputRange: [ 0, SCROLL_DISTANCE ],
+  outputRange: [ UPPER_VIEW_HEIGHT, HEADER_VIEW_HEIGHT ],
+  extrapolate: 'clamp'
+});
 
+const opacityAnimInter = opacityAnimVal?.interpolate({
+  inputRange: [ 0, SCROLL_DISTANCE ],
+  outputRange: [ 1, 0 ]
+});
+console.log('ANIM ', opacityAnimInter);
+
+const marginTopInter = marginTopAnim?.interpolate({
+  inputRange: [ 0, SCROLL_DISTANCE ],
+  outputRange: [ 50, -100 ]
+})
+
+const _onScrollHandler = ({nativeEvent}) => {
+  headerAnimVal?.setValue( nativeEvent?.contentOffset?.y )
+  opacityAnimVal?.setValue( nativeEvent?.contentOffset?.y )
+  marginTopAnim?.setValue( nativeEvent?.contentOffset?.y )
+}
 
   return (
     <SafeAreaView style={styles.mainContainer}>
-      <Header />
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollView} >
-        <View style={styles.upperView} >
+      <Animated.View style={[styles.upperView,{ height: translateY }]} >
           <Image source={imagePath} style={styles.imageStyle} resizeMode={'contain'} />
-          <View style={styles.imageOverlayView} >
+          <Animated.View style={[styles.imageOverlayView, { opacity: opacityAnimInter, marginTop: marginTopInter }]} >
             <Text style={styles.overlayHeader} >{`Here's an offer we know\nyou can't refuse!`}</Text>
             <Text style={styles.overlaySubText} >{`If you are looking for a reason to switch to rental.\nSubscriptions, you've come to the rightplace.\nOur list of benifits is long we needed a whole\nother page for it.`}</Text>
-          </View>
-        </View>
-        <View style={styles.bottomView} >
+          </Animated.View>
           <View style={styles.tabView} >
             <View style={[styles.tabHolder]} >
               <Text style={[styles.tabText]} >{`Our promise`}</Text>
@@ -38,69 +64,74 @@ const App = () => {
               <Text style={[styles.tabText]}>{`We get you covered`}</Text>
             </View>
           </View>
+        </Animated.View>
+      <ScrollView scrollEventThrottle={16} onScroll={_onScrollHandler}  showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollView} >
+        
+        <View style={styles.bottomView} >
+
           {/* <ScrollView > */}
-            <View style={styles.promiseView} >
-              <Text style={styles.header} >{`Our Promises`}</Text>
-              <Text style={styles.subheader} >{`Qualoty and your satisfaction are at the very core of out service`}</Text>
-              <View style={styles.rowHolderView} >
-                {
-                  DummyData?.slice(0, 2)?.map?.((item) => <View style={styles.rowCol} >
-                    <Text style={styles.header} >{item?.header}</Text>
-                    <Text style={[styles.subheader, { width: 180, alignSelf: 'center' }]} >{item?.subText}</Text>
-                  </View>)
-                }
-              </View>
-              <View style={styles.rowHolderView} >
-                {
-                  DummyData?.slice(2, DummyData?.length)?.map?.((item) => <View style={styles.rowCol} >
-                    <Text style={styles.header} >{item?.header}</Text>
-                    <Text style={[styles.subheader, { width: 180, alignSelf: 'center' }]} >{item?.subText}</Text>
-                  </View>)
-                }
-              </View>
+          <View style={styles.promiseView} >
+            <Text style={styles.header} >{`Our Promises`}</Text>
+            <Text style={styles.subheader} >{`Qualoty and your satisfaction are at the very core of out service`}</Text>
+            <View style={styles.rowHolderView} >
+              {
+                DummyData?.slice(0, 2)?.map?.((item) => <View style={styles.rowCol} >
+                  <Text style={styles.header} >{item?.header}</Text>
+                  <Text style={[styles.subheader, { width: 180, alignSelf: 'center' }]} >{item?.subText}</Text>
+                </View>)
+              }
             </View>
+            <View style={styles.rowHolderView} >
+              {
+                DummyData?.slice(2, DummyData?.length)?.map?.((item) => <View style={styles.rowCol} >
+                  <Text style={styles.header} >{item?.header}</Text>
+                  <Text style={[styles.subheader, { width: 180, alignSelf: 'center' }]} >{item?.subText}</Text>
+                </View>)
+              }
+            </View>
+          </View>
 
-            <View style={styles.promiseView} >
-              <Text style={styles.header} >{`Complete Flexibility`}</Text>
-              <Text style={styles.subheader} >{`Qualoty and your satisfaction are at the very core of out service`}</Text>
-              <View style={styles.rowHolderView} >
-                {
-                  DummyData?.slice(0, 2)?.map?.((item) => <View style={styles.rowCol} >
-                    <Text style={styles.header} >{item?.header}</Text>
-                    <Text style={[styles.subheader, { width: 180, alignSelf: 'center' }]} >{item?.subText}</Text>
-                  </View>)
-                }
-              </View>
-              <View style={styles.rowHolderView} >
-                {
-                  DummyData?.slice(2, DummyData?.length)?.map?.((item) => <View style={styles.rowCol} >
-                    <Text style={styles.header} >{item?.header}</Text>
-                    <Text style={[styles.subheader, { width: 180, alignSelf: 'center' }]} >{item?.subText}</Text>
-                  </View>)
-                }
-              </View>
+          <View style={styles.promiseView} >
+            <Text style={styles.header} >{`Complete Flexibility`}</Text>
+            <Text style={styles.subheader} >{`Qualoty and your satisfaction are at the very core of out service`}</Text>
+            <View style={styles.rowHolderView} >
+              {
+                DummyData?.slice(0, 2)?.map?.((item) => <View style={styles.rowCol} >
+                  <Text style={styles.header} >{item?.header}</Text>
+                  <Text style={[styles.subheader, { width: 180, alignSelf: 'center' }]} >{item?.subText}</Text>
+                </View>)
+              }
             </View>
+            <View style={styles.rowHolderView} >
+              {
+                DummyData?.slice(2, DummyData?.length)?.map?.((item) => <View style={styles.rowCol} >
+                  <Text style={styles.header} >{item?.header}</Text>
+                  <Text style={[styles.subheader, { width: 180, alignSelf: 'center' }]} >{item?.subText}</Text>
+                </View>)
+              }
+            </View>
+          </View>
 
-            <View style={styles.promiseView} >
-              <Text style={styles.header} >{`We get you covered`}</Text>
-              <Text style={styles.subheader} >{`Qualoty and your satisfaction are at the very core of out service`}</Text>
-              <View style={styles.rowHolderView} >
-                {
-                  DummyData?.slice(0, 2)?.map?.((item) => <View style={styles.rowCol} >
-                    <Text style={styles.header} >{item?.header}</Text>
-                    <Text style={[styles.subheader, { width: 180, alignSelf: 'center' }]} >{item?.subText}</Text>
-                  </View>)
-                }
-              </View>
-              <View style={styles.rowHolderView} >
-                {
-                  DummyData?.slice(2, DummyData?.length)?.map?.((item) => <View style={styles.rowCol} >
-                    <Text style={styles.header} >{item?.header}</Text>
-                    <Text style={[styles.subheader, { width: 180, alignSelf: 'center' }]} >{item?.subText}</Text>
-                  </View>)
-                }
-              </View>
+          <View style={styles.promiseView} >
+            <Text style={styles.header} >{`We get you covered`}</Text>
+            <Text style={styles.subheader} >{`Qualoty and your satisfaction are at the very core of out service`}</Text>
+            <View style={styles.rowHolderView} >
+              {
+                DummyData?.slice(0, 2)?.map?.((item) => <View style={styles.rowCol} >
+                  <Text style={styles.header} >{item?.header}</Text>
+                  <Text style={[styles.subheader, { width: 180, alignSelf: 'center' }]} >{item?.subText}</Text>
+                </View>)
+              }
             </View>
+            <View style={styles.rowHolderView} >
+              {
+                DummyData?.slice(2, DummyData?.length)?.map?.((item) => <View style={styles.rowCol} >
+                  <Text style={styles.header} >{item?.header}</Text>
+                  <Text style={[styles.subheader, { width: 180, alignSelf: 'center' }]} >{item?.subText}</Text>
+                </View>)
+              }
+            </View>
+          </View>
           {/* </ScrollView> */}
 
         </View>
@@ -160,11 +191,12 @@ const styles = StyleSheet.create({
     fontWeight: '500'
   },
   scrollView: {
-    flex: 1
+    // flex: 1
   },
   upperView: {
     // borderWidth: 1,
-    flex: 0.3
+    // flex: 0.3
+    height: 300
   },
   imageStyle: {
     flex: 1,
@@ -194,7 +226,7 @@ const styles = StyleSheet.create({
   },
   tabView: {
     flexDirection: 'row',
-
+    height: 50
   },
   tabText: {
     fontSize: 10,
