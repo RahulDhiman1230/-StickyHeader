@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -16,9 +16,18 @@ const HEADER_VIEW_HEIGHT = 50;
 const SCROLL_DISTANCE = UPPER_VIEW_HEIGHT - HEADER_VIEW_HEIGHT;
 const imagePath = require('./src/bgImage.jpeg');
 const App = () => {
+
 const headerAnimVal = useRef( new Animated.Value(0) ).current;
 const opacityAnimVal = useRef( new Animated.Value(0) ).current;
 const marginTopAnim = useRef( new Animated.Value(0) ).current;
+
+const [selectedTab, setSelectedTab] = useState(-1);
+
+const [ yOffsetPromise, setyOffsetPromise ] = useState(0);
+const [ yOffsetComplete, setyOffsetComplete ] = useState(0);
+const [ yOffsetCovered, setyOffsetCovered ] = useState(0);
+
+
 /**
  * Interpolate the headerAnimVal
  */
@@ -32,7 +41,6 @@ const opacityAnimInter = opacityAnimVal?.interpolate({
   inputRange: [ 0, SCROLL_DISTANCE ],
   outputRange: [ 1, 0 ]
 });
-console.log('ANIM ', opacityAnimInter);
 
 const marginTopInter = marginTopAnim?.interpolate({
   inputRange: [ 0, SCROLL_DISTANCE ],
@@ -42,9 +50,23 @@ const marginTopInter = marginTopAnim?.interpolate({
 const _onScrollHandler = ({nativeEvent}) => {
   headerAnimVal?.setValue( nativeEvent?.contentOffset?.y )
   opacityAnimVal?.setValue( nativeEvent?.contentOffset?.y )
-  marginTopAnim?.setValue( nativeEvent?.contentOffset?.y )
-}
+  marginTopAnim?.setValue( nativeEvent?.contentOffset?.y );
 
+  // if( nativeEvent?.contentOffset?.y === 0) 
+  //   setSelectedTab(-1);
+   if( nativeEvent?.contentOffset?.y > 0 && nativeEvent?.contentOffset?.y + 400 < yOffsetComplete  )
+    setSelectedTab(0);
+  else if( nativeEvent?.contentOffset?.y + 400 >= yOffsetComplete  && nativeEvent?.contentOffset?.y + 400 < yOffsetCovered  )
+    setSelectedTab(1);
+  else if( nativeEvent?.contentOffset?.y + 400 >= yOffsetCovered   )
+    setSelectedTab(2);
+
+  console.log('onscroll : ', nativeEvent);
+}
+console.log('selected taB', selectedTab );
+console.log('promise : ', yOffsetPromise);
+console.log('complete : ', yOffsetComplete);
+console.log('covered : ', yOffsetCovered);
   return (
     <SafeAreaView style={styles.mainContainer}>
       <Animated.View style={[styles.upperView,{ height: translateY }]} >
@@ -54,23 +76,26 @@ const _onScrollHandler = ({nativeEvent}) => {
             <Text style={styles.overlaySubText} >{`If you are looking for a reason to switch to rental.\nSubscriptions, you've come to the rightplace.\nOur list of benifits is long we needed a whole\nother page for it.`}</Text>
           </Animated.View>
           <View style={styles.tabView} >
-            <View style={[styles.tabHolder]} >
-              <Text style={[styles.tabText]} >{`Our promise`}</Text>
+            <View style={[styles.tabHolder, { borderColor: selectedTab == 0 ? '#42d1f5' : '#cfd1d1'}]} >
+              <Text style={[styles.tabText, { color: selectedTab == 0 ? '#42d1f5' : '#cfd1d1' }]} >{`Our promise`}</Text>
             </View>
-            <View style={[styles.tabHolder]} >
-              <Text style={[styles.tabText]}>{`Complete Flexibility`}</Text>
+            <View style={[styles.tabHolder, { borderColor: selectedTab == 1 ? '#42d1f5' : '#cfd1d1'}]} >
+              <Text style={[styles.tabText,  { color: selectedTab == 1 ? '#42d1f5' : '#cfd1d1' }]}>{`Complete Flexibility`}</Text>
             </View>
-            <View style={[styles.tabHolder]} >
-              <Text style={[styles.tabText]}>{`We get you covered`}</Text>
+            <View style={[styles.tabHolder, { borderColor: selectedTab == 2 ? '#42d1f5' : '#cfd1d1'}]} >
+              <Text style={[styles.tabText, { color: selectedTab == 2 ? '#42d1f5' : '#cfd1d1' }]}>{`We get you covered`}</Text>
             </View>
           </View>
         </Animated.View>
-      <ScrollView scrollEventThrottle={16} onScroll={_onScrollHandler}  showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollView} >
+      <ScrollView removeClippedSubviews={true} scrollEventThrottle={16} onScroll={_onScrollHandler}  showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollView} >
         
         <View style={styles.bottomView} >
 
           {/* <ScrollView > */}
-          <View style={styles.promiseView} >
+          <View onLayout={({nativeEvent}) => {
+            console.log('Promise :', nativeEvent);
+            setyOffsetPromise( nativeEvent?.layout?.y );
+          }} style={styles.promiseView} >
             <Text style={styles.header} >{`Our Promises`}</Text>
             <Text style={styles.subheader} >{`Qualoty and your satisfaction are at the very core of out service`}</Text>
             <View style={styles.rowHolderView} >
@@ -91,7 +116,10 @@ const _onScrollHandler = ({nativeEvent}) => {
             </View>
           </View>
 
-          <View style={styles.promiseView} >
+          <View  onLayout={({nativeEvent}) => {
+            console.log('Complete :', nativeEvent);
+            setyOffsetComplete( nativeEvent?.layout?.y );
+          }} style={styles.promiseView} >
             <Text style={styles.header} >{`Complete Flexibility`}</Text>
             <Text style={styles.subheader} >{`Qualoty and your satisfaction are at the very core of out service`}</Text>
             <View style={styles.rowHolderView} >
@@ -112,7 +140,10 @@ const _onScrollHandler = ({nativeEvent}) => {
             </View>
           </View>
 
-          <View style={styles.promiseView} >
+          <View  onLayout={({nativeEvent}) => {
+            console.log('Covered :', nativeEvent);
+            setyOffsetCovered( nativeEvent?.layout?.y );
+          }} style={styles.promiseView} >
             <Text style={styles.header} >{`We get you covered`}</Text>
             <Text style={styles.subheader} >{`Qualoty and your satisfaction are at the very core of out service`}</Text>
             <View style={styles.rowHolderView} >
@@ -239,7 +270,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     height: 50,
     borderBottomWidth: 3,
-    borderColor: 'lightgrey',
+    // borderColor: 'lightgrey',
   },
   promiseView: {
 
